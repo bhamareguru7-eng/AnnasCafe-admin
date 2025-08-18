@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { ChefHat, ShoppingCart, Search, Bell, User, Loader2 } from 'lucide-react';
+import { ChefHat, ShoppingCart, Bell, User, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const LiveOrders = () => {
