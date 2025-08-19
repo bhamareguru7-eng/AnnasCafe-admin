@@ -191,7 +191,7 @@ const Analysis = () => {
               <select 
                 value={selectedPeriod} 
                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="day">Daily</option>
                 <option value="month">Monthly</option>
@@ -205,7 +205,7 @@ const Analysis = () => {
                 <select 
                   value={selectedYear} 
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="border border-gray-300 text-black rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   {availableYears.map(year => (
                     <option key={year} value={year}>{year}</option>
@@ -280,7 +280,7 @@ const Analysis = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Revenue Trend Chart */}
           <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
+            <h3 className="text-xl font-bold text-black-800 text-black mb-4 ">
               Revenue Trend ({selectedPeriod === 'day' ? 'Daily' : selectedPeriod === 'month' ? 'Monthly' : 'Yearly'})
             </h3>
             <ResponsiveContainer width="100%" height={300}>
