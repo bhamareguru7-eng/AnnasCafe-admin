@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ChefHat, Plus, BarChart3, ShoppingCart, Search, Bell, User, Menu, X } from 'lucide-react';
 import LiveOrders from './LiveOrders';
 import UpdateItem from './UpdateItem';
+import Analysis from './Analytics';
 
 const TabsLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -110,12 +111,7 @@ const TabsLayout = ({ children }) => {
         `}>
           {activeTab === "live-orders" && <LiveOrders />}
           {activeTab === "update-item" && <UpdateItem />}
-          {activeTab === "analytics" && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-800">Analytics</h2>
-              <p className="text-gray-600 mt-2">Analytics dashboard coming soon</p>
-            </div>
-          )}
+          {activeTab === "analytics" && <Analysis/>}
         </main>
       </div>
     </div>
