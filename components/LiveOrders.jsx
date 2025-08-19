@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { ChefHat, ShoppingCart, Bell, User, Loader2 } from 'lucide-react';
+import { ChefHat, ShoppingCart, Bell, User, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import analysis from './analysis/analysis';
 
@@ -11,6 +11,7 @@ const LiveOrders = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [processingPayment, setProcessingPayment] = useState({});
   const [processingOrder, setProcessingOrder] = useState({});
+  const [deletingOrder, setDeletingOrder] = useState({});
 
   // Helper function to safely parse the iteminfo
   const parseItemInfo = (iteminfo) => {
@@ -140,6 +141,28 @@ const LiveOrders = () => {
       console.error('Error updating order status:', error);
     } finally {
       setProcessingOrder(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) {
+      return;
+    }
+    
+    setDeletingOrder(prev => ({ ...prev, [orderId]: true }));
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Error deleting order. Please try again.');
+    } finally {
+      setDeletingOrder(prev => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -314,7 +337,8 @@ const LiveOrders = () => {
                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                     border: '1px solid #e5e7eb',
                     overflow: 'hidden',
-                    transition: 'transform 0.2s, box-shadow 0.2s'
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
@@ -324,6 +348,36 @@ const LiveOrders = () => {
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
                   }}>
+                    {/* Delete button */}
+                    <button
+                      onClick={() => handleDeleteOrder(order.id)}
+                      disabled={deletingOrder[order.id]}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '70px',
+                        width: '32px',
+                        height: '32px',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: deletingOrder[order.id] ? 'wait' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                        opacity: deletingOrder[order.id] ? 0.7 : 1
+                      }}
+                      title="Delete Order"
+                    >
+                      {deletingOrder[order.id] ? (
+                        <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                      ) : (
+                        <Trash2 style={{ width: '16px', height: '16px' }} />
+                      )}
+                    </button>
+
                     <div style={{
                       background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                       padding: isMobile ? '16px' : '20px',
