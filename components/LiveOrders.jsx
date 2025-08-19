@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChefHat, ShoppingCart, Bell, User, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import analysis from './analysis/analysis';
 
 const LiveOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -385,7 +386,11 @@ const LiveOrders = () => {
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <button
-                          onClick={order.payment_done ? undefined : () => handlePaymentDone(order.id)}
+                          onClick={order.payment_done ? undefined : () =>{
+                            handlePaymentDone(order.id);
+                            analysis(order.total);
+                          }
+                          }
                           disabled={order.payment_done || processingPayment[order.id]}
                           style={{
                             width: '100%',
@@ -419,6 +424,7 @@ const LiveOrders = () => {
                           )}
                           {order.payment_done ? 'Payment Completed ✓' : 
                            processingPayment[order.id] ? 'Processing...' : 'Mark Payment Done'}
+                        
                         </button>
 
                         <button
