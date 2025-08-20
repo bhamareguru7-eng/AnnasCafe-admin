@@ -97,7 +97,7 @@ const TabsLayout = ({ children }) => {
         {/* Overlay */}
         {sidebarOpen && isMobile && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-30"
+            className="fixed inset-0 bg-transperant bg-opacity-10 z-30"
             onClick={() => setSidebarOpen(false)}
           />
         )}
