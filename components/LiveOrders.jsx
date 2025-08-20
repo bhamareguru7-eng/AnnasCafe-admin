@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChefHat, ShoppingCart, Bell, User, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import analysis from './analysis/analysis';
@@ -12,6 +12,9 @@ const LiveOrders = () => {
   const [processingPayment, setProcessingPayment] = useState({});
   const [processingOrder, setProcessingOrder] = useState({});
   const [deletingOrder, setDeletingOrder] = useState({});
+  const [user, setUser] = useState(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
   // Helper function to safely parse the iteminfo
   const parseItemInfo = (iteminfo) => {
@@ -40,6 +43,34 @@ const LiveOrders = () => {
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Get current user
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      } catch (error) {
+        console.error('Error getting user:', error);
+      }
+    };
+
+    getCurrentUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setUser(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setIsUserMenuOpen(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Fetch orders and setup real-time subscription
@@ -108,6 +139,52 @@ const LiveOrders = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const clearAuthCookies = () => {
+    // Clear all Supabase auth cookies
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie;
+      
+      // Remove all cookies that might be related to Supabase auth
+      if (name.includes('sb-') || name.includes('supabase')) {
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear auth cookies
+      clearAuthCookies();
+      
+      // Close the user menu
+      setIsUserMenuOpen(false);
+      
+      // Force a hard refresh to ensure all auth state is cleared
+      window.location.reload();
+    } catch (error) {
+      console.error('Error logging out:', error.message);
+    }
+  };
 
   // Handlers with loading states
   const handlePaymentDone = async (orderId) => {
@@ -259,18 +336,88 @@ const LiveOrders = () => {
                 {activeOrders.length}
               </span>
             </button>
-            <button style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer'
-            }}>
-              <User style={{ width: '24px', height: '24px', color: '#6b7280' }} />
-            </button>
+            
+            {/* User Menu */}
+            <div ref={userMenuRef} style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: isUserMenuOpen ? '#f3f4f6' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <User style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+              </button>
+
+              {isUserMenuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    minWidth: '200px',
+                    zIndex: 1000
+                  }}
+                >
+                  {user ? (
+                    <>
+                      <div style={{ marginBottom: '12px' }}>
+                        <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+                          Signed in as
+                        </p>
+                        <p
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            color: '#1f2937',
+                            margin: '4px 0 0 0',
+                            wordBreak: 'break-all'
+                          }}
+                        >
+                          {user.email}
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={handleLogout}
+                        style={{
+                          width: '100%',
+                          padding: '8px 16px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#dc2626'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#ef4444'}
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+                      Not signed in
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

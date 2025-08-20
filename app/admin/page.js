@@ -1,5 +1,5 @@
-import TabsLayout from "@/components/TabsLayout"
+import Login from "@/components/Login"
 
 export default function Order() {
-  return <TabsLayout />
+  return <Login />
 }
