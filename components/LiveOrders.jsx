@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChefHat, ShoppingCart, Bell, User, Loader2, Trash2 } from 'lucide-react';
+import { ChefHat, ShoppingCart, Bell, User, Loader2, Trash2, Volume2, VolumeX } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import analysis from './analysis/analysis';
 
@@ -14,22 +14,60 @@ const LiveOrders = () => {
   const [deletingOrder, setDeletingOrder] = useState({});
   const [user, setUser] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const userMenuRef = useRef(null);
+  const audioRef = useRef(null);
 
   // Helper function to safely parse the iteminfo
   const parseItemInfo = (iteminfo) => {
     try {
-      // First parse to get the JSON string
-      const firstParse = iteminfo;
-      // If it's still a string, parse again
-      if (typeof firstParse === 'string') {
-        return JSON.parse(firstParse);
+      if (typeof iteminfo === 'string') {
+        return JSON.parse(iteminfo);
       }
-      // If it's already an array/object, return as is
-      return firstParse;
+      return iteminfo;
     } catch (error) {
       console.error('Error parsing iteminfo:', error);
-      return []; // Return empty array as fallback
+      return [];
+    }
+  };
+
+  // Initialize audio after user interaction
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      if (!hasUserInteracted) {
+        setHasUserInteracted(true);
+        audioRef.current = new Audio("/new-order.mp3");
+        // Preload the audio
+        audioRef.current.load();
+      }
+    };
+
+    // Listen for any user interaction
+    document.addEventListener('click', handleUserInteraction, { once: true });
+    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, [hasUserInteracted]);
+
+  const toggleSound = () => {
+    const newSoundState = !soundEnabled;
+    setSoundEnabled(newSoundState);
+    
+    // If enabling sound, try to play a test sound (with user interaction)
+    if (newSoundState && hasUserInteracted && audioRef.current) {
+      // Reset audio to beginning
+      audioRef.current.currentTime = 0;
+      
+      // Play with error handling
+      audioRef.current.play().catch(error => {
+        console.log("Audio play failed:", error);
+        // If play fails, disable sound
+        setSoundEnabled(false);
+      });
     }
   };
 
@@ -121,7 +159,15 @@ const LiveOrders = () => {
           });
 
           if (payload.eventType === 'INSERT') {
+            // Always update orders
             setOrders(prev => [...prev, parseOrder(payload.new)]);
+            
+            // Play sound only if enabled and user has interacted
+            if (soundEnabled && hasUserInteracted && audioRef.current) {
+              // Clone the audio element to allow multiple plays
+              const audioClone = new Audio("/new-order.mp3");
+              audioClone.play().catch(err => console.log("Audio play error:", err));
+            }
           } else if (payload.eventType === 'UPDATE') {
             setOrders(prev =>
               prev.map(order =>
@@ -138,7 +184,7 @@ const LiveOrders = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [soundEnabled, hasUserInteracted]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -264,6 +310,13 @@ const LiveOrders = () => {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
+        .order-card {
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .order-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
       `}</style>
 
       {/* Header */}
@@ -299,16 +352,35 @@ const LiveOrders = () => {
                 color: '#f97316',
                 margin: 0
               }}>
-                RestaurantHub - Live Orders
+                Annas Cafe - Live Orders
               </h1>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px' }}>
-            <div style={{ position: 'relative', display: isMobile ? 'none' : 'block' }}>
-          
-             
-            </div>
+            {/* Sound Toggle Button */}
+            <button 
+              onClick={toggleSound}
+              style={{
+                padding: '8px',
+                color: soundEnabled ? '#f97316' : '#6b7280',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title={soundEnabled ? "Sound On" : "Sound Off"}
+            >
+              {soundEnabled ? (
+                <Volume2 style={{ width: '24px', height: '24px' }} />
+              ) : (
+                <VolumeX style={{ width: '24px', height: '24px' }} />
+              )}
+            </button>
+
             <button style={{
               position: 'relative',
               padding: '8px',
@@ -478,22 +550,13 @@ const LiveOrders = () => {
             }}>
               {activeOrders.length > 0 ? (
                 activeOrders.map(order => (
-                  <div key={order.id} style={{
+                  <div key={order.id} className="order-card" style={{
                     backgroundColor: 'white',
                     borderRadius: '12px',
                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                     border: '1px solid #e5e7eb',
                     overflow: 'hidden',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
                     position: 'relative'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
                   }}>
                     {/* Delete button */}
                     <button
@@ -587,11 +650,10 @@ const LiveOrders = () => {
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <button
-                          onClick={order.payment_done ? undefined : () =>{
+                          onClick={order.payment_done ? undefined : () => {
                             handlePaymentDone(order.id);
                             analysis(order.total);
-                          }
-                          }
+                          }}
                           disabled={order.payment_done || processingPayment[order.id]}
                           style={{
                             width: '100%',

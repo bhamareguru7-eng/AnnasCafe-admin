@@ -24,7 +24,7 @@ const UpdateItem = () => {
   });
 
   // Available categories
-  const categories = ['Starter', 'Main Course', 'Dessert', 'Beverage', 'Snacks'];
+  const categories = ['Starter', 'Main Course', 'Dessert', 'Beverages', 'Snacks'];
 
   // Check if device is mobile
   useEffect(() => {
@@ -141,7 +141,7 @@ const UpdateItem = () => {
         .from('menu')
         .insert([{
           name: formData.name.trim(),
-          price: parseFloat(formData.price),
+          price: parseInt(formData.price),
           category: formData.category
         }]);
 
@@ -171,7 +171,7 @@ const UpdateItem = () => {
         .from('menu')
         .update({
           name: formData.name.trim(),
-          price: parseFloat(formData.price),
+          price: parseInt(formData.price),
           category: formData.category
         })
         .eq('id', id);
@@ -242,6 +242,19 @@ const UpdateItem = () => {
     return matchesSearch && matchesCategory;
   });
 
+  // Visibility
+
+  const visibilityMode = async(visibilityId,visibility)=>{
+   const {error} = await supabase
+   .from('menu')
+   .update({Visibility:!visibility})
+   .eq("id",visibilityId);
+
+   if(error){
+    console.log('There is error while updating the visibility');
+    return;
+   }
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
@@ -252,7 +265,7 @@ const UpdateItem = () => {
               <ChefHat className="w-6 h-6 text-white" />
             </div>
             <h1 className={`font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-              RestaurantHub - Menu Management
+              Annas Cafe - Menu Management
             </h1>
           </div>
 
@@ -489,6 +502,16 @@ const UpdateItem = () => {
                       </div>
 
                       <div className="flex gap-3">
+                      <button
+                          onClick={()=>visibilityMode(item.id,item.Visibility)}
+  
+                          className={`flex items-center gap-2 py-2 px-4 rounded-lg font-medium shadow transition-all ${
+                            editingItem !== null ? 'bg-blue-500 opacity-50 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+                          } text-white`}
+                        >
+                          
+                          {item.Visibility?'Visible':'Not Visible'}
+                        </button>
                         <button
                           onClick={() => startEditing(item)}
                           disabled={editingItem !== null}

@@ -68,7 +68,7 @@ const LoginPage = () => {
               {/* Add an icon here if needed */}
             </div>
           </div>
-          <h1>Hotel Revenue Analytics</h1>
+          <h1>Annas Cafe</h1>
           <p>Access your business insights and financial performance</p>
         </div>
 
