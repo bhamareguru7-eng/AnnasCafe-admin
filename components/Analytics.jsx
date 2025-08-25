@@ -534,18 +534,7 @@ const Analysis = () => {
         </div>
 
         {/* Setup Instructions (if no data) */}
-        {data.length === 0 && !loading && (
-          <div className="bg-amber-50 border border-amber-500 text-amber-700 px-6 py-4 rounded-xl mt-6">
-            <h3 className="font-bold mb-2">Setup Required</h3>
-            <p className="mb-3">To use this analytics dashboard, please:</p>
-            <ol className="list-decimal list-inside space-y-1 text-sm">
-              <li>Replace 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase credentials</li>
-              <li>Ensure your Supabase table is named 'analysis' (or update the table name in fetchAnalyticsData function)</li>
-              <li>Make sure your table has 'date' (timestamp) and 'amount' (numeric) columns</li>
-              <li>Add some sample data to see the analytics in action</li>
-            </ol>
-          </div>
-        )}
+        
       </div>
     </div>
   );
